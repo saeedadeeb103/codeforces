@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Journal · CF Tracker{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Journal</h1>
+  <form method="get" action="/journal" class="filters" data-autosubmit>
+    <input type="date" name="day" value="{{ selected.isoformat() }}" max="{{ today.isoformat() }}" aria-label="Day">
+    <noscript><button class="btn" type="submit">Go</button></noscript>
+  </form>
+</div>
+
+<form method="post" action="/journal" class="card stack">
+  <div class="card-head">
+    <h2>{{ "Today" if selected == today else (selected | nice_date) }}</h2>
+    {% if saved %}<span class="saved" role="status">Saved ✓</span>{% endif %}
+  </div>
+  <input type="hidden" name="day" value="{{ selected.isoformat() }}">
+  <textarea name="learned" rows="8" placeholder="What did you learn? What tripped you up? What will you try tomorrow?">{{ entry.learned }}</textarea>
+  {% if solved[selected] %}
+  <p class="muted">Solved this day:
+    {% for p in solved[selected] %}<a href="/problems/{{ p.code }}">{{ p.code }}</a>{{ ", " if not loop.last }}{% endfor %}
+  </p>
+  {% endif %}
+  <div class="row">
+    <label class="field field-inline">
+      <span>Minutes coded</span>
+      <input type="number" name="minutes" min="0" max="1440" step="5" value="{{ entry.minutes }}">
+    </label>
+    <button class="btn btn-primary" type="submit">Save</button>
+  </div>
+</form>
+
+<section>
+  <div class="page-head"><h2>History</h2><span class="muted">{{ history | length }} entr{{ 'y' if history | length == 1 else 'ies' }} · {{ minutes_total // 60 }}h {{ minutes_total % 60 }}m coded</span></div>
+  {% for e in history %}
+  <article class="card entry">
+    <div class="card-head">
+      <h3><a href="/journal?day={{ e.day.isoformat() }}">{{ e.day | nice_date }}</a></h3>
+      <span class="muted">{{ e.minutes }} min{% if solved[e.day] %} · {{ solved[e.day] | length }} solved{% endif %}</span>
+    </div>
+    {% if e.learned %}<p class="entry-text">{{ e.learned }}</p>{% endif %}
+    {% if solved[e.day] %}
+    <p class="chips">{% for p in solved[e.day] %}<a class="chip" href="/problems/{{ p.code }}">{{ p.code }} · {{ p.name }}</a>{% endfor %}</p>
+    {% endif %}
+  </article>
+  {% else %}
+  <p class="muted">No entries yet. Write one above — a few lines a day adds up.</p>
+  {% endfor %}
+</section>
+{% endblock %}

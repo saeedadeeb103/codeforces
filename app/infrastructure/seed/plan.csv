@@ -1,0 +1,201 @@
+day,code,name,topic,rating
+1,4A,Watermelon,Math,800
+1,71A,Way Too Long Words,Strings,800
+1,231A,Team,Implementation,800
+1,339A,Helpful Maths,Sorting,800
+1,158A,Next Round,Implementation,800
+1,50A,Domino piling,Math,800
+1,282A,Bit++,Implementation,800
+1,112A,Petya and Strings,Strings,800
+2,263A,Beautiful Matrix,Implementation,800
+2,281A,Word Capitalization,Strings,800
+2,546A,Soldier and Bananas,Math,800
+2,271A,Beautiful Year,Brute force,800
+2,236A,Boy or Girl,Strings,800
+2,266A,Stones on the Table,Implementation,800
+2,791A,Bear and Big Brother,Implementation,800
+2,977A,Wrong Subtraction,Implementation,800
+3,59A,Word,Strings,800
+3,617A,Elephant,Math,800
+3,116A,Tram,Implementation,800
+3,1520B,Ordinary Numbers,Brute force,800
+3,1360A,Minimal Square,Greedy,800
+3,1360B,Honest Coach,Sorting,800
+3,266B,Queue at the School,Implementation,800
+3,677A,Vanya and Fence,Implementation,800
+4,110A,Nearly Lucky Number,Implementation,800
+4,486A,Calculating Function,Math,800
+4,520A,Pangram,Strings,800
+4,1367B,Even Array,Greedy,800
+4,1370A,Maximum GCD,Number theory,800
+4,1421A,XORwice,Bitmasks,800
+4,467A,George and Accommodation,Implementation,800
+4,200B,Drinks,Math,800
+5,1352A,Sum of Round Numbers,Math,800
+5,1520A,Do Not Be Distracted!,Strings,800
+5,1385B,Restore the Permutation by Merger,Implementation,800
+5,1472B,Fair Division,Greedy,800
+5,1611B,Team Composition: Programmers and Mathematicians,Binary search,800
+5,1335A,Candies and Two Sisters,Math,800
+5,1367A,Short Substrings,Strings,800
+5,1385A,Three Pairwise Maximums,Math,800
+6,1294A,Collecting Coins,Math,800
+6,1003A,Polycarp's Pockets,Implementation,800
+6,1176A,Divide it!,Greedy,800
+6,1144A,Diverse Strings,Strings,800
+6,381A,Sereja and Dima,Two pointers,800
+6,1472A,Cards for Friends,Math,800
+6,1611A,Make Even,Math,800
+6,1462B,Last Year's Substring,Strings,800
+7,1490A,Dense Array,Greedy,800
+7,1374A,Required Remainder,Math,800
+7,41A,Translation,Strings,800
+7,344A,Magnets,Implementation,800
+7,1462A,Favorite Sequence,Two pointers,800
+7,405A,Gravity Flip,Sorting,900
+7,6A,Triangle,Brute force,900
+7,26A,Almost Prime,Number theory,900
+8,151A,Soft Drinking,Math,800
+8,160A,Twins,Greedy,900
+8,337A,Puzzles,Sorting,900
+8,1475A,Odd Divisor,Number theory,900
+8,1335B,Construct the String,Constructive,900
+8,977B,Two-gram,Strings,900
+8,580A,Kefa and First Steps,DP,900
+8,115A,Party,Trees / DFS,900
+9,9A,Die Roll,Math,800
+9,1144B,Parity Alternated Deletions,Greedy,900
+9,318A,Even Odds,Math,900
+9,118A,String Task,Strings,1000
+9,579A,Raising Bacteria,Bitmasks,1000
+9,17A,Noldbach problem,Number theory,1000
+9,1520C,Not Adjacent Matrix,Constructive,1000
+9,1249B1,Books Exchange (easy version),Graphs / DFS,1000
+10,1462C,Unique Number,Greedy,900
+10,1374B,"Multiply by 2, divide by 6",Math,900
+10,1611C,Polycarp Recovers the Permutation,Constructive,1000
+10,1020B,Badge,Graphs / DFS,1000
+10,1374C,Move Brackets,Stack / Greedy,1000
+10,1144C,Two Shuffled Sequences,Sorting,1000
+10,131A,cAPS lOCK,Strings,1000
+10,706B,Interesting drink,Binary search,1100
+11,1475B,New Year's Number,Math,900
+11,58A,Chat room,Greedy,1000
+11,313B,Ilya and Queries,Prefix sums,1100
+11,1335C,Two Teams Composing,Hashing / counting,1100
+11,1472C,Long Jumps,DP,1100
+11,1365A,Matrix Game,Games,1100
+11,1490C,Sum of Cubes,Two pointers,1100
+11,492B,Vanya and Lanterns,Sorting,1200
+12,1A,Theatre Square,Math,1000
+12,230A,Dragons,Greedy,1000
+12,1490B,Balanced Remainders,Greedy,1000
+12,368B,Sereja and Suffixes,Hashing / counting,1100
+12,489B,BerSU Ball,Two pointers,1200
+12,474B,Worms,Binary search,1200
+12,433B,Kuriyama Mirai's Stones,Prefix sums,1200
+12,1352B,Same Parity Summands,Constructive,1200
+13,69A,Young Physicist,Math,1000
+13,1360C,Similar Pairs,Greedy,1100
+13,6C,"Alice, Bob and Chocolate",Two pointers,1200
+13,1352C,K-th Not Divisible by n,Binary search,1200
+13,1520D,Same Differences,Hashing / counting,1200
+13,1294B,Collecting Packages,Sorting,1200
+13,1097B,Petr and a Combination Lock,Bitmasks,1200
+13,1472D,Even-Odd Game,Games,1200
+14,82A,Double Cola,Math,1100
+14,1176B,Merge it!,Greedy,1100
+14,1006C,Three Parts of the Array,Two pointers,1200
+14,977C,Less or Equal,Sorting,1200
+14,217A,Ice Skating,DSU,1200
+14,1490D,Permutation Transformation,Recursion / Trees,1200
+14,25A,IQ test,Implementation,1300
+14,4C,Registration system,Hashing / counting,1300
+15,1385C,Make It Good,Greedy,1200
+15,189A,Cut Ribbon,DP,1300
+15,230B,T-primes,Number theory,1300
+15,600B,Queries about less or equal elements,Binary search,1300
+15,1352D,"Alice, Bob and Candies",Two pointers,1300
+15,1335D,Anti-Sudoku,Constructive,1300
+15,1360E,Polygon,Implementation,1300
+15,1003C,Intense Heat,Prefix sums,1300
+16,271B,Prime Matrix,Number theory,1300
+16,1367C,Social Distance,Greedy,1300
+16,1003B,Binary String Constructing,Constructive,1300
+16,1249B2,Books Exchange (hard version),DSU,1300
+16,862B,Mahmoud and Ehab and the bipartiteness,Graphs / bipartite,1300
+16,279B,Books,Two pointers,1400
+16,816B,Karen and Coffee,Prefix sums,1400
+16,1201C,Maximum Median,Binary search,1400
+17,1360D,Buying Shovels,Number theory,1300
+17,1176C,Lose it!,Greedy,1300
+17,1365B,Trouble Sort,Constructive,1300
+17,295A,Greg and Array,Prefix sums,1400
+17,1324D,Pair of Topics,Binary search,1400
+17,1475C,Ball in Berland,Hashing / counting,1400
+17,550B,Preparing Olympiad,Bitmasks,1400
+17,1195C,Basketball Exercise,DP,1400
+18,1294C,Product of Three Numbers,Number theory,1300
+18,489C,Given Length and Sum of Digits...,Greedy,1400
+18,1095C,Powers Of Two,Bitmasks,1400
+18,977D,"Divide by three, multiply by two",Sorting,1400
+18,1167C,News Distribution,DSU,1400
+18,520B,Two Buttons,Graphs / BFS,1400
+18,1365C,Rotation Matching,Hashing / counting,1400
+18,1462D,Add to Neighbour and Remove,Prefix sums,1400
+19,1520E,Arranging The Sheep,Greedy,1400
+19,762A,k-th divisor,Number theory,1400
+19,1490E,Accidental Victory,Sorting,1400
+19,1374D,Zero Remainder Array,Math,1400
+19,455A,Boredom,DP,1500
+19,224B,Array,Two pointers,1500
+19,1352E,Special Elements,Prefix sums,1500
+19,1352F,Binary String Reconstruction,Constructive,1500
+20,1144D,Equalize Them All,Greedy,1400
+20,1385D,a-Good String,Recursion / Divide & conquer,1500
+20,166E,Tetrahedron,DP,1500
+20,977E,Cyclic Components,Graphs / DFS,1500
+20,580C,Kefa and Park,Trees / DFS,1500
+20,1263D,Secret Passwords,DSU,1500
+20,1462E1,Close Tuples (easy version),Binary search,1500
+20,1490F,Equalize the Array,Sorting,1500
+21,744A,Hongcow Builds A Nation,DSU,1500
+21,1106D,Lunar New Year and a Wander,Graphs / priority queue,1500
+21,1611D,Weights Assignment For Tree Edges,Trees / DFS,1500
+21,371C,Hamburgers,Binary search,1600
+21,1352G,Special Permutation,Constructive,1600
+21,1294D,MEX maximizing,Math,1600
+21,1458A,Row GCD,Number theory,1600
+21,1003D,Coins and Queries,Greedy,1600
+22,510C,Fox And Names,Graphs / topological sort,1600
+22,1336A,Linova and Kingdom,Trees / DFS,1600
+22,1234D,Distinct Characters Queries,Data structures,1600
+22,1526C1,Potions (Easy Version),Priority queue,1500
+22,1374E1,Reading Books (easy version),Greedy,1600
+22,466C,Number of Ways,Prefix sums,1700
+22,1360F,Spy-string,Brute force,1700
+22,4D,Mysterious Present,DP,1700
+23,377A,Maze,Graphs / DFS,1600
+23,474D,Flowers,DP,1700
+23,1472E,Correct Placement,Sorting,1700
+23,1406C,Link Cut Centroids,Trees / DFS,1700
+23,339D,Xenia and Bit Operations,Segment tree,1700
+23,977F,Consecutive Subsequence,DP,1700
+23,1360G,A/B Matrix,Constructive,1900
+23,25D,Roads not only in Berland,DSU,1900
+24,711C,Coloring Trees,DP,1700
+24,1176E,Cover it!,Graphs / BFS,1700
+24,1093D,Beautiful Graph,Graphs / bipartite,1700
+24,1365D,Solve The Maze,Graphs / BFS,1700
+24,1324F,Maximum White Subtree,Trees / rerooting DP,1800
+24,1490G,Old Floppy Drive,Binary search,1900
+24,5C,Longest Regular Bracket Sequence,Stack / DP,1900
+24,380C,Sereja and Brackets,Segment tree,2000
+25,1144F,Graph Without Long Directed Paths,Graphs / bipartite,1700
+25,1611E1,Escape The Maze (easy version),Graphs / BFS,1700
+25,1114D,Flood Fill,DP,1900
+25,1092F,Tree with Maximum Cost,Trees / rerooting DP,1900
+25,1385E,Directing Edges,Graphs / topological sort,2000
+25,1360H,Binary Median,Binary search,2100
+25,1176F,Destroy it!,DP,2100
+25,1472G,Moving to the Capital,Graphs / BFS + DP,2100

@@ -1,0 +1,26 @@
+{% macro bar(p, size="md") -%}
+<div class="bar bar-{{ size }}{{ ' is-complete' if p.complete }}" role="progressbar"
+     aria-label="{{ p.label }}" aria-valuemin="0" aria-valuemax="{{ p.total }}" aria-valuenow="{{ p.done }}">
+  <span style="width: {{ '%.2f' % ((p.done / p.total * 100) if p.total else 0) }}%"></span>
+</div>
+{%- endmacro %}
+
+{% macro rating(r) -%}
+<span class="rating rating-{{ rating_class(r.value) }}">{{ r.value }}</span>
+{%- endmacro %}
+
+{% macro status_pill(s) -%}
+<span class="pill pill-{{ s.value }}">{{ s.label }}</span>
+{%- endmacro %}
+
+{% macro check(p, next) -%}
+<form method="post" action="/problems/{{ p.code }}/status" class="check-form">
+  <input type="hidden" name="status" value="{{ 'todo' if p.is_done else 'solved' }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <button type="submit" class="check{{ ' is-done' if p.is_done }}"
+          aria-label="{{ 'Mark ' ~ p.code ~ ' as not solved' if p.is_done else 'Mark ' ~ p.code ~ ' as solved' }}"
+          title="{{ 'Solved — click to undo' if p.is_done else 'Mark solved' }}">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</form>
+{%- endmacro %}

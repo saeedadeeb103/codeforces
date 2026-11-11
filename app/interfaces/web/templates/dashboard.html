@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% from "_macros.html" import bar, rating, check %}
+{% block content %}
+{% set r = d.report %}
+
+<section class="hero card">
+  <div class="hero-head">
+    <div>
+      <p class="eyebrow">{{ d.today | nice_date }}</p>
+      {% if r.current_day %}
+        <h1>Day {{ r.current_day }} <span class="muted">of {{ r.total_days }}</span></h1>
+      {% else %}
+        <h1>Plan complete <span class="muted">— all {{ r.overall.total }} solved</span></h1>
+      {% endif %}
+    </div>
+    <div class="hero-number">
+      <strong>{{ r.overall.percent }}%</strong>
+      <span>{{ r.overall.done }} / {{ r.overall.total }} solved</span>
+    </div>
+  </div>
+  {{ bar(r.overall, "lg") }}
+  <div class="days-strip" aria-label="Progress per day">
+    {% for p in r.by_day %}
+      {% set dn = p.label | replace("Day ", "") | int %}<a href="/plan#day-{{ dn }}" class="day-seg{{ ' is-current' if dn == r.current_day }}{{ ' is-complete' if p.complete }}"
+         title="{{ p.label }}: {{ p.done }}/{{ p.total }}">
+        <span style="height: {{ (p.done / p.total * 100) if p.total else 0 }}%"></span>
+      </a>
+    {% endfor %}
+  </div>
+  <div class="days-strip-legend"><span>Day 1</span><span>Day {{ r.total_days }}</span></div>
+</section>
+
+<section class="tiles">
+  <div class="tile">
+    <span class="tile-label">Current streak</span>
+    <strong>{{ d.streak.current }}<small> day{{ '' if d.streak.current == 1 else 's' }}</small></strong>
+    <span class="tile-sub">{{ "Active today ✓" if d.streak.active_today else ("Keep it alive today" if d.streak.current else "Solve one to start") }}</span>
+  </div>
+  <div class="tile">
+    <span class="tile-label">Best streak</span>
+    <strong>{{ d.streak.longest }}<small> day{{ '' if d.streak.longest == 1 else 's' }}</small></strong>
+    <span class="tile-sub">Solve or journal to count a day</span>
+  </div>
+  <div class="tile">
+    <span class="tile-label">Solved today</span>
+    <strong>{{ d.solved_today }}<small> / {{ d.daily_target }}</small></strong>
+    <div class="bar bar-sm{{ ' is-complete' if d.solved_today >= d.daily_target }}"><span style="width: {{ [d.solved_today / d.daily_target * 100, 100] | min }}%"></span></div>
+  </div>
+  <div class="tile">
+    <span class="tile-label">Time coded</span>
+    <strong>{{ (d.minutes_total // 60) }}<small>h</small> {{ d.minutes_total % 60 }}<small>m</small></strong>
+    <span class="tile-sub">From your journal</span>
+  </div>
+</section>
+
+<section class="card sync" id="sync">
+  {% set s = d.sync %}
+  {% if s.connected %}
+    <div class="sync-info">
+      <span class="sync-dot{{ ' is-error' if s.last_error }}" aria-hidden="true"></span>
+      <div>
+        <strong>Codeforces sync</strong>
+        <span class="muted">as <a href="https://codeforces.com/profile/{{ s.handle | urlencode }}" target="_blank" rel="noopener">{{ s.handle }}</a> · {{ s.last_synced_at | ago }}</span>
+        {% if s.last_error %}
+          <p class="error">{{ s.last_error }}</p>
+        {% elif s.last_synced_at %}
+          <p class="muted sync-result">
+            {% if s.last_solved or s.last_attempted %}Last sync: +{{ s.last_solved }} solved{% if s.last_attempted %}, +{{ s.last_attempted }} attempted{% endif %}.
+            {% else %}Up to date.{% endif %}
+            Accepted problems are marked solved automatically.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="sync-actions">
+      <form method="post" action="/sync"><button class="btn" type="submit">Sync now</button></form>
+      <form method="post" action="/sync/disconnect"><button class="btn btn-ghost" type="submit" title="Stop syncing (your progress stays)">Disconnect</button></form>
+    </div>
+  {% else %}
+    <div class="sync-info">
+      <span class="sync-dot is-off" aria-hidden="true"></span>
+      <div>
+        <strong>Connect Codeforces</strong>
+        <p class="muted sync-result">Problems you get Accepted on Codeforces are ticked off here automatically, dated by your first AC.</p>
+      </div>
+    </div>
+    <form method="post" action="/sync/connect" class="sync-actions">
+      <input name="handle" placeholder="Your handle" aria-label="Codeforces handle" required minlength="3" maxlength="24" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="btn btn-primary" type="submit">Connect</button>
+    </form>
+  {% endif %}
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      {% set focus = d.today_set[0].day if d.today_set else 1 %}
+      <h2>Day {{ focus }} set</h2>
+      <span class="muted">{{ d.today_set | selectattr("is_done") | list | length }} / {{ d.today_set | length }}</span>
+    </div>
+    <ul class="problem-list">
+      {% for p in d.today_set %}
+      <li class="{{ 'is-done' if p.is_done }}">
+        {{ check(p, "/") }}
+        <a class="problem-link" href="/problems/{{ p.code }}">
+          <span class="code">{{ p.code }}</span>
+          <span class="name">{{ p.name }}</span>
+        </a>
+        <span class="topic">{{ p.topic }}</span>
+        {{ rating(p.rating) }}
+      </li>
+      {% endfor %}
+    </ul>
+    <a class="more" href="/plan#day-{{ d.today_set[0].day if d.today_set else 1 }}">Open the full plan →</a>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>What did you learn today?</h2>
+      {% if d.today_entry.learned %}<span class="muted">saved</span>{% endif %}
+    </div>
+    <form method="post" action="/journal" class="stack">
+      <input type="hidden" name="day" value="{{ d.today.isoformat() }}">
+      <input type="hidden" name="next" value="/">
+      <textarea name="learned" rows="7" placeholder="e.g. Prefix sums turn range-sum queries into O(1). Watch out for off-by-one on l-1.">{{ d.today_entry.learned }}</textarea>
+      <div class="row">
+        <label class="field field-inline">
+          <span>Minutes coded</span>
+          <input type="number" name="minutes" min="0" max="1440" step="5" value="{{ d.today_entry.minutes }}">
+        </label>
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Activity</h2>
+    <span class="muted">last {{ d.heatmap | length }} weeks</span>
+  </div>
+  <div class="heatmap-wrap">
+    <div class="heatmap" style="--weeks: {{ d.heatmap | length }}" role="img" aria-label="Problems solved per day">
+      {% for week in d.heatmap %}
+        <div class="heat-col">
+          {% for c in week %}
+            <span class="heat l{{ c.level }}{{ ' is-today' if c.day == d.today }}"
+                  title="{{ c.day | short_date }}: {{ c.solved }} solved{{ ', journaled' if c.journaled }}"></span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="heat-legend"><span>Less</span><i class="heat l0"></i><i class="heat l1"></i><i class="heat l2"></i><i class="heat l3"></i><i class="heat l4"></i><span>More</span></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>By topic</h2><span class="muted">{{ r.by_topic | length }} topics</span></div>
+    {% macro topic_rows(items) %}
+    <ul class="bars">
+      {% for p in items %}
+      <li>
+        <a href="/plan?topic={{ p.label | urlencode }}" class="bars-label">{{ p.label }}</a>
+        {{ bar(p, "sm") }}
+        <span class="bars-num">{{ p.done }}/{{ p.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endmacro %}
+    {{ topic_rows(r.by_topic[:12]) }}
+    {% if r.by_topic | length > 12 %}
+    <details class="more-bars">
+      <summary><span class="when-closed">Show {{ r.by_topic | length - 12 }} more</span><span class="when-open">Show fewer</span></summary>
+      {{ topic_rows(r.by_topic[12:]) }}
+    </details>
+    {% endif %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>By rating</h2></div>
+    <ul class="bars">
+      {% for p in r.by_rating %}
+      <li>
+        <span class="bars-label">{{ rating({'value': p.label | int}) }}</span>
+        {{ bar(p, "sm") }}
+        <span class="bars-num">{{ p.done }}/{{ p.total }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

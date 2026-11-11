@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "_macros.html" import rating, status_pill, check %}
+{% block title %}Plan · CF Tracker{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Plan</h1>
+  <form method="get" action="/plan" class="filters" data-autosubmit>
+    <select name="status" aria-label="Status">
+      <option value="">Any status</option>
+      {% for s in Status %}<option value="{{ s.value }}" {{ 'selected' if flt.status == s }}>{{ s.label }}</option>{% endfor %}
+    </select>
+    <select name="topic" aria-label="Topic">
+      <option value="">Any topic</option>
+      {% for f in families %}<option {{ 'selected' if flt.topic_family == f }}>{{ f }}</option>{% endfor %}
+    </select>
+    <select name="day" aria-label="Day">
+      <option value="">Any day</option>
+      {% for n in all_days %}<option value="{{ n }}" {{ 'selected' if flt.day == n }}>Day {{ n }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn" type="submit">Filter</button></noscript>
+    {% if filtered %}<a class="btn btn-ghost" href="/plan">Clear</a>{% endif %}
+  </form>
+</div>
+{% if filtered %}<p class="muted">{{ shown }} problem{{ '' if shown == 1 else 's' }} match.</p>{% endif %}
+
+{% for day, problems in days.items() %}
+  {% set done, total = totals[day] %}
+  <section class="card day-card" id="day-{{ day }}">
+    <div class="card-head">
+      <h2>Day {{ day }}</h2>
+      <div class="day-progress">
+        <div class="bar bar-sm{{ ' is-complete' if done == total }}"><span style="width: {{ done / total * 100 }}%"></span></div>
+        <span class="muted">{{ done }}/{{ total }}</span>
+      </div>
+    </div>
+    <ul class="problem-list">
+      {% for p in problems %}
+      {% set here = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') ~ '#day-' ~ day %}
+      <li class="{{ 'is-done' if p.is_done }}">
+        {{ check(p, here) }}
+        <a class="problem-link" href="/problems/{{ p.code }}">
+          <span class="code">{{ p.code }}</span>
+          <span class="name">{{ p.name }}</span>
+        </a>
+        <span class="topic">{{ p.topic }}</span>
+        {% if p.status.value in ('attempted', 'review') %}{{ status_pill(p.status) }}{% endif %}
+        {% if p.notes %}<span class="has-notes" title="Has notes">✎</span>{% endif %}
+        {{ rating(p.rating) }}
+        <a class="ext" href="{{ p.url }}" target="_blank" rel="noopener" title="Open on Codeforces" aria-label="Open {{ p.code }} on Codeforces">↗</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% else %}
+  <section class="card"><p>No problems match these filters.</p></section>
+{% endfor %}
+{% endblock %}

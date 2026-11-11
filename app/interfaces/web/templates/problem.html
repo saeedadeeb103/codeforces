@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import rating %}
+{% block title %}{{ p.code }} {{ p.name }} · CF Tracker{% endblock %}
+{% block content %}
+<div class="crumbs">
+  <a href="/plan#day-{{ p.day }}">Day {{ p.day }}</a>
+  <span>·</span>
+  <span>Problem {{ p.position }} of 200</span>
+</div>
+
+<div class="page-head problem-head">
+  <div>
+    <h1><span class="code">{{ p.code }}</span> {{ p.name }}</h1>
+    <div class="meta">
+      <span class="topic">{{ p.topic }}</span>
+      {{ rating(p.rating) }}
+      {% if p.solved_on %}<span class="muted">Solved {{ p.solved_on | short_date }}</span>{% endif %}
+    </div>
+  </div>
+  <a class="btn" href="{{ p.url }}" target="_blank" rel="noopener">Open on Codeforces ↗</a>
+</div>
+
+<form method="post" action="/problems/{{ p.code }}/work" class="stack" id="work-form">
+{# First submit button = what Enter triggers: plain save, status unchanged. #}
+<button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
+<section class="card">
+  {# Status buttons submit the whole form, so notes and code are saved with the status. #}
+  <div class="segmented" role="group" aria-label="Status (also saves your notes and code)">
+    {% for s in Status %}
+    <button type="submit" name="status" value="{{ s.value }}" class="seg seg-{{ s.value }}{{ ' is-active' if p.status == s }}" aria-pressed="{{ 'true' if p.status == s else 'false' }}">{{ s.label }}</button>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card stack">
+  {% if saved %}<p class="saved" role="status">Saved ✓</p>{% endif %}
+  <label class="field">
+    <span>What I learned</span>
+    <textarea name="notes" rows="6" placeholder="Key idea, the trick, the bug that cost you time, the pattern to remember…">{{ p.notes }}</textarea>
+  </label>
+  <label class="field">
+    <span class="field-row">
+      <span>Solution</span>
+      <select name="language" aria-label="Language">
+        {% for lang in LANGUAGES %}<option value="{{ lang }}" {{ 'selected' if p.language == lang }}>{{ lang }}</option>{% endfor %}
+      </select>
+    </span>
+    <textarea name="solution" rows="16" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+              placeholder="Paste or write your code here">{{ p.solution }}</textarea>
+  </label>
+  <div class="row">
+    <label class="field field-inline">
+      <span>Minutes spent</span>
+      <input type="number" name="minutes" min="0" max="1440" step="1" value="{{ p.time_spent_minutes }}">
+    </label>
+    {% if p.is_done %}
+    <label class="field field-inline">
+      <span>Solved on</span>
+      <input type="date" name="solved_on" max="{{ today.isoformat() }}" value="{{ p.solved_on.isoformat() }}">
+    </label>
+    {% endif %}
+    <button class="btn btn-primary" type="submit">Save <kbd>⌘S</kbd></button>
+  </div>
+</section>
+</form>
+
+<nav class="pager">
+  {% if prev %}<a href="/problems/{{ prev.code }}">← {{ prev.code }} {{ prev.name }}</a>{% else %}<span></span>{% endif %}
+  {% if nxt %}<a href="/problems/{{ nxt.code }}">{{ nxt.code }} {{ nxt.name }} →</a>{% endif %}
+</nav>
+{% endblock %}

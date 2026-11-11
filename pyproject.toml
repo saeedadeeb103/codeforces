@@ -1,0 +1,9 @@
+[project]
+name = "cf-tracker"
+version = "0.1.0"
+description = "Personal Codeforces practice tracker"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
