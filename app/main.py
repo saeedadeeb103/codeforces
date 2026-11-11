@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -28,7 +29,7 @@ from app.infrastructure.db import Base, make_engine, make_session_factory
 from app.infrastructure.seed.plan_loader import load_plan
 from app.infrastructure.unit_of_work import SqlAlchemyUnitOfWork
 from app.interfaces.web.auth import LoginThrottle, RequireLogin
-from app.interfaces.web.routes import STATIC_DIR, render, router
+from app.interfaces.web.routes import STATIC_DIR, render, router, wants_json
 
 
 log = logging.getLogger("cf_tracker")
@@ -105,10 +106,14 @@ def create_app(
 
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):
+        if wants_json(request):
+            return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
         return render(request, "error.html", 400, title="That didn't work", message=str(exc))
 
     @app.exception_handler(NotFound)
     async def not_found(request: Request, exc: NotFound):
+        if wants_json(request):
+            return JSONResponse({"ok": False, "error": str(exc)}, status_code=404)
         return render(request, "error.html", 404, title="Not found", message=str(exc))
 
     return app

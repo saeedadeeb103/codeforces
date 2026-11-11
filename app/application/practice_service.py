@@ -17,10 +17,15 @@ class PlanFilter:
     status: Status | None = None
     topic_family: str | None = None
     day: int | None = None
+    difficulty: str | None = None
+    search: str | None = None
 
     def matches(self, p: Problem) -> bool:
+        q = (self.search or "").strip().lower()
         return (
             (self.status is None or p.status == self.status)
+            and (self.difficulty is None or p.rating.difficulty == self.difficulty)
+            and (not q or q in p.name.lower() or q in p.code.value.lower() or q in p.topic.name.lower())
             and (self.topic_family is None or p.topic.family == self.topic_family)
             and (self.day is None or p.day == self.day)
         )

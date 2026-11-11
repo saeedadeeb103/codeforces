@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} · CF Tracker{% endblock %}
 {% block content %}
-<section class="card narrow">
-  <h1>{{ title }}</h1>
-  <p>{{ message }}</p>
-  <p><a class="btn" href="javascript:history.back()">Go back</a> <a class="btn btn-ghost" href="/">Dashboard</a></p>
+<section class="card" style="max-width:520px">
+  <h1 style="margin-bottom:8px">{{ title }}</h1>
+  <p class="muted">{{ message }}</p>
+  <div class="row" style="margin-top:16px"><a class="btn" href="javascript:history.back()">Go back</a> <a class="btn btn-ghost" href="/">Dashboard</a></div>
 </section>
 {% endblock %}

@@ -7,6 +7,7 @@ from collections.abc import Callable, Hashable, Sequence
 from dataclasses import dataclass
 
 from app.domain.practice.problem import Problem
+from app.domain.practice.value_objects import DIFFICULTIES
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class ProgressReport:
     by_day: list[Progress]
     by_topic: list[Progress]
     by_rating: list[Progress]
+    by_difficulty: list[Progress]
     current_day: int | None  # first day with unfinished work; None when the plan is done
     total_days: int
 
@@ -61,12 +63,16 @@ def build_progress_report(problems: Sequence[Problem]) -> ProgressReport:
         lambda prog, fam: (-prog.total, fam),
     )
     by_rating = _group(problems, lambda p: p.rating.value, str, lambda _, r: r)
+    by_difficulty = _group(
+        problems, lambda p: p.rating.difficulty, str, lambda _, d: DIFFICULTIES.index(d)
+    )
     unfinished_days = sorted({p.day for p in problems if not p.is_done})
     return ProgressReport(
         overall=overall,
         by_day=by_day,
         by_topic=by_topic,
         by_rating=by_rating,
+        by_difficulty=by_difficulty,
         current_day=unfinished_days[0] if unfinished_days else None,
         total_days=len(by_day),
     )

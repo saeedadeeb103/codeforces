@@ -49,8 +49,20 @@ class Rating:
         if not (800 <= self.value <= 3500 and self.value % 100 == 0):
             raise DomainError(f"{self.value} is not a Codeforces rating")
 
+    @property
+    def difficulty(self) -> str:
+        """Plan-level band: Easy < 1200 <= Medium < 1600 <= Hard."""
+        if self.value < 1200:
+            return "Easy"
+        if self.value < 1600:
+            return "Medium"
+        return "Hard"
+
     def __str__(self) -> str:
         return str(self.value)
+
+
+DIFFICULTIES = ("Easy", "Medium", "Hard")
 
 
 @dataclass(frozen=True)

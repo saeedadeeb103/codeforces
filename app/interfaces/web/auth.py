@@ -9,7 +9,7 @@ import time
 from urllib.parse import quote
 
 from starlette.requests import Request
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 log = logging.getLogger(__name__)
@@ -74,6 +74,10 @@ class RequireLogin:
             return
         if scope.get("session", {}).get("auth") is True:
             await self.app(scope, receive, send)
+            return
+        accept = dict(scope.get("headers", [])).get(b"accept", b"").decode()
+        if "application/json" in accept:  # background saves: say so instead of redirecting
+            await JSONResponse({"ok": False, "error": "login"}, status_code=401)(scope, receive, send)
             return
         target = "/login"
         if scope["method"] == "GET" and scope["path"] != "/":

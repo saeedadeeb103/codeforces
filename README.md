@@ -3,8 +3,15 @@
 A personal, password-protected tracker for the **Codeforces 200 Practice Plan**: 200 problems over 25 days (8 a day, rated 800 → 2100).
 
 - **Dashboard:** overall progress bar, a bar for each of the 25 days, streaks, solved-today vs. the target of 8, a 26-week activity grid, and progress by topic and by rating.
-- **Plan:** every problem grouped by day, with one-click "solved" checkboxes and filters for status, topic and day.
-- **Problem page:** status (To do / Attempted / Solved / Review again), *what I learned*, your solution code, time spent, and the solved date.
+- **Problems:** a problem list with search, filters for day, difficulty (Easy below 1200, Medium 1200–1599, Hard 1600+), status and topic, and one-click status toggles.
+- **Problem workspace:** a split-screen coding view.
+  - **Left:** Description and Notes tabs. The statement opens on Codeforces, because Codeforces blocks embedding.
+  - **Right:** a Monaco code editor (VS Code's editor) and a Testcase/Result console.
+  - **Run:** executes Python 3 in your browser via Pyodide (WebAssembly), with a 10-second limit, and compares against the expected output.
+  - **Saving:** your work autosaves in the background. `⌘/Ctrl+S` saves now and `⌘/Ctrl+Enter` runs.
+  - **Stopwatch:** logs the time to the problem.
+  - **Resizing:** the panes are resizable.
+  - **Phones:** the plain text editor is used instead of Monaco.
 - **Journal:** one entry per day for what you learned and the minutes you coded. Each entry is linked to the problems you solved that day.
 - **Codeforces sync:** connect your handle on the dashboard. Every `CF_SYNC_MINUTES` (default 30) the app reads your submissions from the public API:
   - an Accepted submission marks the problem solved, dated by your first accept in your time zone

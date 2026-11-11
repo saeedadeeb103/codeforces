@@ -1,23 +1,21 @@
 {% extends "base.html" %}
+{% from "_macros.html" import brand %}
 {% block title %}Log in · CF Tracker{% endblock %}
 {% block chrome %}{% endblock %}
-{% block content %}
-<div class="login">
+{% block main %}
+<main class="login">
   <div class="card login-card">
-    <div class="brand brand-lg">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><rect x="7" y="17" width="4" height="8" rx="1"/><rect x="14" y="11" width="4" height="14" rx="1"/><rect x="21" y="6" width="4" height="19" rx="1"/></svg>
-      <span>CF Tracker</span>
-    </div>
+    {{ brand() }}
     <p class="muted">200 problems, one day at a time.</p>
     <form method="post" action="/login" class="stack">
       <input type="hidden" name="next" value="{{ next }}">
       <label class="field">
         <span>Password</span>
-        <input type="password" name="password" autocomplete="current-password" autofocus required>
+        <input type="password" name="password" autocomplete="current-password" autofocus required style="height:40px">
       </label>
       {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-      <button class="btn btn-primary" type="submit">Log in</button>
+      <button class="btn btn-primary" type="submit" style="height:40px">Log in</button>
     </form>
   </div>
-</div>
+</main>
 {% endblock %}

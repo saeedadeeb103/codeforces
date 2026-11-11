@@ -1,57 +1,79 @@
 {% extends "base.html" %}
-{% from "_macros.html" import rating, status_pill, check %}
-{% block title %}Plan · CF Tracker{% endblock %}
+{% from "_macros.html" import rating, diff, check, icon, bar %}
+{% block title %}Problems · CF Tracker{% endblock %}
 {% block content %}
-<div class="page-head">
-  <h1>Plan</h1>
-  <form method="get" action="/plan" class="filters" data-autosubmit>
-    <select name="status" aria-label="Status">
-      <option value="">Any status</option>
-      {% for s in Status %}<option value="{{ s.value }}" {{ 'selected' if flt.status == s }}>{{ s.label }}</option>{% endfor %}
-    </select>
-    <select name="topic" aria-label="Topic">
-      <option value="">Any topic</option>
-      {% for f in families %}<option {{ 'selected' if flt.topic_family == f }}>{{ f }}</option>{% endfor %}
-    </select>
-    <select name="day" aria-label="Day">
-      <option value="">Any day</option>
-      {% for n in all_days %}<option value="{{ n }}" {{ 'selected' if flt.day == n }}>Day {{ n }}</option>{% endfor %}
-    </select>
-    <noscript><button class="btn" type="submit">Filter</button></noscript>
-    {% if filtered %}<a class="btn btn-ghost" href="/plan">Clear</a>{% endif %}
-  </form>
+{% set here = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') %}
+<div class="list-head">
+  <h1>Problems</h1>
+  <div class="mini-ring" title="{{ report.overall.done }} of {{ report.overall.total }} solved">
+    {% set c = 2 * 3.14159265 * 14 %}
+    <svg viewBox="0 0 34 34" aria-hidden="true">
+      <circle cx="17" cy="17" r="14" fill="none" stroke="var(--track)" stroke-width="4"/>
+      <circle cx="17" cy="17" r="14" fill="none" stroke="var(--green)" stroke-width="4" stroke-linecap="round"
+              stroke-dasharray="{{ '%.2f' % (report.overall.done / report.overall.total * c) }} {{ '%.2f' % c }}"/>
+    </svg>
+    <span><b>{{ report.overall.done }}/{{ report.overall.total }}</b> Solved</span>
+  </div>
 </div>
-{% if filtered %}<p class="muted">{{ shown }} problem{{ '' if shown == 1 else 's' }} match.</p>{% endif %}
 
-{% for day, problems in days.items() %}
-  {% set done, total = totals[day] %}
-  <section class="card day-card" id="day-{{ day }}">
-    <div class="card-head">
-      <h2>Day {{ day }}</h2>
-      <div class="day-progress">
-        <div class="bar bar-sm{{ ' is-complete' if done == total }}"><span style="width: {{ done / total * 100 }}%"></span></div>
-        <span class="muted">{{ done }}/{{ total }}</span>
-      </div>
-    </div>
-    <ul class="problem-list">
+<nav class="day-chips" aria-label="Days">
+  <a class="day-chip{{ ' is-active' if not flt.day }}" href="/plan">All<div class="bar"><span style="width: {{ report.overall.percent }}%"></span></div></a>
+  {% for p in report.by_day %}
+    {% set dn = p.label | replace("Day ", "") | int %}
+    <a class="day-chip{{ ' is-active' if flt.day == dn }}" href="/plan?day={{ dn }}" title="{{ p.done }}/{{ p.total }} solved">Day {{ dn }}{{ bar(p) }}</a>
+  {% endfor %}
+</nav>
+
+<form method="get" action="/plan" class="toolbar" data-autosubmit>
+  <label class="search">{{ icon("search") }}<input type="search" name="q" value="{{ flt.search or '' }}" placeholder="Search questions" aria-label="Search"></label>
+  {% if flt.day %}<input type="hidden" name="day" value="{{ flt.day }}">{% endif %}
+  <select name="difficulty" aria-label="Difficulty">
+    <option value="">Difficulty</option>
+    {% for dlabel in ["Easy", "Medium", "Hard"] %}<option {{ 'selected' if flt.difficulty == dlabel }}>{{ dlabel }}</option>{% endfor %}
+  </select>
+  <select name="status" aria-label="Status">
+    <option value="">Status</option>
+    {% for s in Status %}<option value="{{ s.value }}" {{ 'selected' if flt.status == s }}>{{ s.label }}</option>{% endfor %}
+  </select>
+  <select name="topic" aria-label="Topic">
+    <option value="">Topics</option>
+    {% for f in families %}<option {{ 'selected' if flt.topic_family == f }}>{{ f }}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn" type="submit">Filter</button></noscript>
+  {% if filtered %}<a class="btn btn-ghost" href="/plan">Reset</a>{% endif %}
+</form>
+
+<section class="card" style="padding:8px 10px">
+  {% if problems %}
+  <table class="ptable">
+    <thead>
+      <tr>
+        <th class="c-status">Status</th>
+        <th class="c-title">Title</th>
+        <th class="c-topic">Topic</th>
+        <th class="c-diff">Difficulty</th>
+        <th class="c-rating">Rating</th>
+        <th class="c-day">Day</th>
+        <th class="c-ext"><span class="sr-only">Codeforces</span></th>
+      </tr>
+    </thead>
+    <tbody>
       {% for p in problems %}
-      {% set here = request.url.path ~ ('?' ~ request.url.query if request.url.query else '') ~ '#day-' ~ day %}
-      <li class="{{ 'is-done' if p.is_done }}">
-        {{ check(p, here) }}
-        <a class="problem-link" href="/problems/{{ p.code }}">
-          <span class="code">{{ p.code }}</span>
-          <span class="name">{{ p.name }}</span>
-        </a>
-        <span class="topic">{{ p.topic }}</span>
-        {% if p.status.value in ('attempted', 'review') %}{{ status_pill(p.status) }}{% endif %}
-        {% if p.notes %}<span class="has-notes" title="Has notes">✎</span>{% endif %}
-        {{ rating(p.rating) }}
-        <a class="ext" href="{{ p.url }}" target="_blank" rel="noopener" title="Open on Codeforces" aria-label="Open {{ p.code }} on Codeforces">↗</a>
-      </li>
+      <tr>
+        <td class="c-status">{{ check(p, here) }}</td>
+        <td class="c-title"><a href="/problems/{{ p.code }}">{{ p.code }}. {{ p.name }}</a>{% if p.notes %}<span class="note-dot" title="Has notes">✎</span>{% endif %}</td>
+        <td class="c-topic">{{ p.topic }}</td>
+        <td class="c-diff">{{ diff(p.rating) }}</td>
+        <td class="c-rating">{{ rating(p.rating) }}</td>
+        <td class="c-day">Day {{ p.day }}</td>
+        <td class="c-ext"><a href="{{ p.url }}" target="_blank" rel="noopener" title="Open on Codeforces" aria-label="Open {{ p.code }} on Codeforces">↗</a></td>
+      </tr>
       {% endfor %}
-    </ul>
-  </section>
-{% else %}
-  <section class="card"><p>No problems match these filters.</p></section>
-{% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="console-empty">No problems match these filters.</p>
+  {% endif %}
+</section>
+{% if filtered %}<p class="faint" style="font-size:12.5px">{{ problems | length }} of {{ report.overall.total }} problems shown.</p>{% endif %}
 {% endblock %}

@@ -89,3 +89,8 @@ def test_work_validation():
         p.attach_solution("x", "cobol")
     with pytest.raises(DomainError):
         p.log_time(-1)
+
+
+@pytest.mark.parametrize("value, band", [(800, "Easy"), (1100, "Easy"), (1200, "Medium"), (1500, "Medium"), (1600, "Hard"), (2100, "Hard")])
+def test_rating_difficulty_band(value, band):
+    assert Rating(value).difficulty == band

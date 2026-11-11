@@ -48,7 +48,7 @@ class Dashboard:
 
 
 def activity_grid(
-    problems: list[Problem], entries: list[JournalEntry], today: date, weeks: int = 26
+    problems: list[Problem], entries: list[JournalEntry], today: date, weeks: int = 52
 ) -> list[list[HeatCell]]:
     solved = Counter(p.solved_on for p in problems if p.solved_on is not None)
     journaled = {e.day for e in entries if not e.is_empty}

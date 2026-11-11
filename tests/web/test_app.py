@@ -213,6 +213,29 @@ def test_codeforces_connect_sync_and_disconnect(tmp_path):
     assert app.state.practice.problem("158A").status.value == "solved"  # progress stays
 
 
+def test_workspace_saves_in_background_with_json(authed, app):
+    r = authed.post("/problems/4A/work", headers={"Accept": "application/json"},
+                    data={"notes": "parity", "solution": "print(1)", "language": "python", "minutes": "3", "status": "solved"})
+    assert r.status_code == 200 and r.json() == {
+        "ok": True, "code": "4A", "status": "solved", "status_label": "Solved", "solved_on": "2026-11-11", "minutes": 3}
+    r = authed.post("/problems/4A/work", headers={"Accept": "application/json"}, data={"minutes": "abc"})
+    assert r.status_code == 400 and r.json()["ok"] is False
+    assert app.state.practice.problem("4A").solution == "print(1)"  # failed save changed nothing
+
+
+def test_background_save_without_session_gets_401_json(client):
+    r = client.post("/problems/4A/work", headers={"Accept": "application/json"}, data={"notes": "x"},
+                    follow_redirects=False)
+    assert r.status_code == 401 and r.json() == {"ok": False, "error": "login"}
+
+
+def test_problem_list_search_and_difficulty(authed):
+    page = authed.get("/plan?q=water").text
+    assert "Watermelon" in page and "Way Too Long Words" not in page
+    hard = authed.get("/plan?difficulty=Hard").text
+    assert "Destroy it!" in hard and "Watermelon" not in hard
+
+
 def test_data_survives_restart(tmp_path):
     settings = _settings(tmp_path)
     c1 = TestClient(create_app(settings, clock=lambda: TODAY))

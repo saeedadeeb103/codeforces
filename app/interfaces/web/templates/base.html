@@ -1,36 +1,43 @@
-<!doctype html>
+{% from "_macros.html" import icon, brand %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1a1a1a">
   <title>{% block title %}CF Tracker{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%233b82f6'/><rect x='7' y='17' width='4' height='8' rx='1' fill='white'/><rect x='14' y='11' width='4' height='14' rx='1' fill='white'/><rect x='21' y='6' width='4' height='19' rx='1' fill='white'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23f2a33a'/><rect x='7' y='17' width='4' height='8' rx='1' fill='%231a1a1a'/><rect x='14' y='11' width='4' height='14' rx='1' fill='%231a1a1a'/><rect x='21' y='6' width='4' height='19' rx='1' fill='%231a1a1a'/></svg>">
+  {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   {% block chrome %}
   <header class="topbar">
-    <div class="wrap topbar-inner">
-      <a class="brand" href="/">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><rect x="7" y="17" width="4" height="8" rx="1"/><rect x="14" y="11" width="4" height="14" rx="1"/><rect x="21" y="6" width="4" height="19" rx="1"/></svg>
-        <span>CF Tracker</span>
-      </a>
-      <nav class="nav">
+    <div class="topbar-inner">
+      {{ brand() }}
+      <nav class="nav" aria-label="Main">
         <a href="/" class="{{ 'active' if nav == 'dashboard' }}">Dashboard</a>
-        <a href="/plan" class="{{ 'active' if nav == 'plan' }}">Plan</a>
+        <a href="/plan" class="{{ 'active' if nav == 'plan' }}">Problems</a>
         <a href="/journal" class="{{ 'active' if nav == 'journal' }}">Journal</a>
-        <form method="post" action="/logout"><button class="nav-btn" type="submit">Log out</button></form>
       </nav>
+      <div class="topbar-right">
+        {% block topbar_extra %}{% endblock %}
+        <form method="post" action="/logout" class="inline-form">
+          <button class="icon-btn" type="submit" title="Log out" aria-label="Log out">{{ icon("logout") }}</button>
+        </form>
+      </div>
     </div>
   </header>
   {% endblock %}
-  <main class="wrap">
+  {% block main %}
+  <main class="page">
     {% block content %}{% endblock %}
   </main>
+  {% endblock %}
   <script src="/static/app.js?v={{ asset_version }}" defer></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

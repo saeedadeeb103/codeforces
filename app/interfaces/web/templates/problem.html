@@ -1,71 +1,142 @@
 {% extends "base.html" %}
-{% from "_macros.html" import rating %}
-{% block title %}{{ p.code }} {{ p.name }} · CF Tracker{% endblock %}
-{% block content %}
-<div class="crumbs">
-  <a href="/plan#day-{{ p.day }}">Day {{ p.day }}</a>
-  <span>·</span>
-  <span>Problem {{ p.position }} of 200</span>
-</div>
+{% from "_macros.html" import rating, diff, icon, brand %}
+{% block title %}{{ p.code }}. {{ p.name }} · CF Tracker{% endblock %}
+{% block body_class %}ws{% endblock %}
 
-<div class="page-head problem-head">
-  <div>
-    <h1><span class="code">{{ p.code }}</span> {{ p.name }}</h1>
-    <div class="meta">
-      <span class="topic">{{ p.topic }}</span>
-      {{ rating(p.rating) }}
-      {% if p.solved_on %}<span class="muted">Solved {{ p.solved_on | short_date }}</span>{% endif %}
+{% block chrome %}
+<header class="ws-top">
+  {{ brand(label=False) }}
+  <span class="divider"></span>
+  <a class="list-link" href="/plan?day={{ p.day }}">{{ icon("list") }}<span>Problem List</span></a>
+  {% if prev %}<a class="icon-btn" href="/problems/{{ prev.code }}" title="Previous: {{ prev.code }}. {{ prev.name }}" aria-label="Previous problem">{{ icon("chev-left") }}</a>{% endif %}
+  {% if nxt %}<a class="icon-btn" href="/problems/{{ nxt.code }}" title="Next: {{ nxt.code }}. {{ nxt.name }}" aria-label="Next problem">{{ icon("chev-right") }}</a>{% endif %}
+
+  <div class="ws-center">
+    <button type="button" class="btn" data-run title="Run your code on the test cases (⌘/Ctrl + Enter)">{{ icon("play") }}<span>Run</span></button>
+    <button type="submit" form="work-form" name="status" value="solved" class="btn btn-success" title="Save and mark as solved">{{ icon("check") }}<span>Mark solved</span></button>
+  </div>
+
+  <div class="ws-right">
+    <span class="save-state{{ ' is-ok' if saved }}" id="save-state" role="status" aria-live="polite">{% if saved %}Saved ✓{% endif %}</span>
+    <button type="button" class="timer" id="timer" title="Stopwatch: click to start, click again to log the time">{{ icon("clock") }}<span>00:00</span></button>
+    <a class="icon-btn" href="/" title="Dashboard" aria-label="Dashboard">{{ icon("grid") }}</a>
+  </div>
+</header>
+{% endblock %}
+
+{% block main %}
+<form method="post" action="/problems/{{ p.code }}/work" id="work-form" data-code="{{ p.code }}"
+      data-solved-on="{{ p.solved_on.isoformat() if p.solved_on else '' }}">
+  {# First submit button = what Enter triggers: plain save, status unchanged. #}
+  <button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
+
+  {# ---------- left: description + notes ---------- #}
+  <section class="ws-pane ws-left" aria-label="Problem">
+    <div class="pane-tabs" role="tablist" data-tabs="left">
+      <button type="button" class="pane-tab is-active" role="tab" data-tab="pane-desc">{{ icon("doc") }}Description</button>
+      <span class="sep"></span>
+      <button type="button" class="pane-tab" role="tab" data-tab="pane-notes">{{ icon("pen") }}Notes</button>
     </div>
-  </div>
-  <a class="btn" href="{{ p.url }}" target="_blank" rel="noopener">Open on Codeforces ↗</a>
-</div>
 
-<form method="post" action="/problems/{{ p.code }}/work" class="stack" id="work-form">
-{# First submit button = what Enter triggers: plain save, status unchanged. #}
-<button type="submit" class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
-<section class="card">
-  {# Status buttons submit the whole form, so notes and code are saved with the status. #}
-  <div class="segmented" role="group" aria-label="Status (also saves your notes and code)">
-    {% for s in Status %}
-    <button type="submit" name="status" value="{{ s.value }}" class="seg seg-{{ s.value }}{{ ' is-active' if p.status == s }}" aria-pressed="{{ 'true' if p.status == s else 'false' }}">{{ s.label }}</button>
-    {% endfor %}
-  </div>
-</section>
+    <div class="pane-body desc" id="pane-desc" role="tabpanel">
+      <h1>{{ p.code }}. {{ p.name }}</h1>
+      <div class="meta">
+        {{ diff(p.rating, as_badge=True) }}
+        <span class="badge">{{ rating(p.rating) }}</span>
+        <a class="badge" href="/plan?topic={{ p.topic.family | urlencode }}">{{ p.topic }}</a>
+        <a class="badge" href="/plan?day={{ p.day }}">Day {{ p.day }} · #{{ p.position }}</a>
+        <span class="solved-flag" id="solved-flag" {{ 'hidden' if not p.is_done }}>{{ icon("check-circle") }}<span>Solved{% if p.solved_on %} {{ p.solved_on | short_date }}{% endif %}</span></span>
+      </div>
 
-<section class="card stack">
-  {% if saved %}<p class="saved" role="status">Saved ✓</p>{% endif %}
-  <label class="field">
-    <span>What I learned</span>
-    <textarea name="notes" rows="6" placeholder="Key idea, the trick, the bug that cost you time, the pattern to remember…">{{ p.notes }}</textarea>
-  </label>
-  <label class="field">
-    <span class="field-row">
-      <span>Solution</span>
-      <select name="language" aria-label="Language">
-        {% for lang in LANGUAGES %}<option value="{{ lang }}" {{ 'selected' if p.language == lang }}>{{ lang }}</option>{% endfor %}
-      </select>
-    </span>
-    <textarea name="solution" rows="16" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off"
-              placeholder="Paste or write your code here">{{ p.solution }}</textarea>
-  </label>
-  <div class="row">
-    <label class="field field-inline">
-      <span>Minutes spent</span>
-      <input type="number" name="minutes" min="0" max="1440" step="1" value="{{ p.time_spent_minutes }}">
-    </label>
-    {% if p.is_done %}
-    <label class="field field-inline">
-      <span>Solved on</span>
-      <input type="date" name="solved_on" max="{{ today.isoformat() }}" value="{{ p.solved_on.isoformat() }}">
-    </label>
-    {% endif %}
-    <button class="btn btn-primary" type="submit">Save <kbd>⌘S</kbd></button>
+      <div class="statement-card">
+        <p>Codeforces doesn't allow its statements to be shown inside other sites, so read it there — it opens in a new tab you can keep side by side.</p>
+        <a class="btn btn-primary btn-sm" href="{{ p.url }}" target="_blank" rel="noopener">Open statement on Codeforces {{ icon("ext") }}</a>
+        <p class="faint" style="font-size:12px">Tip: copy the sample input and output into the Testcase panel, then press Run.</p>
+      </div>
+
+      <h3>Status</h3>
+      <div class="segmented" role="group" aria-label="Status (also saves your notes and code)">
+        {% for s in Status %}
+        <button type="submit" name="status" value="{{ s.value }}" class="seg seg-{{ s.value }}{{ ' is-active' if p.status == s }}" aria-pressed="{{ 'true' if p.status == s else 'false' }}">{{ s.label }}</button>
+        {% endfor %}
+      </div>
+
+      <div class="facts">
+        <label class="field">
+          <span>Minutes spent</span>
+          <input type="number" name="minutes" id="minutes" min="0" max="1440" step="1" value="{{ p.time_spent_minutes }}">
+        </label>
+        <label class="field" id="solved-on-field" {{ 'hidden' if not p.is_done }}>
+          <span>Solved on</span>
+          <input type="date" name="solved_on" id="solved-on" max="{{ today.isoformat() }}" value="{{ p.solved_on.isoformat() if p.solved_on else '' }}" {{ 'disabled' if not p.is_done }}>
+        </label>
+      </div>
+
+      <nav class="nav-pager">
+        {% if prev %}<a href="/problems/{{ prev.code }}">← {{ prev.code }}. {{ prev.name }}</a>{% else %}<span></span>{% endif %}
+        {% if nxt %}<a href="/problems/{{ nxt.code }}">{{ nxt.code }}. {{ nxt.name }} →</a>{% endif %}
+      </nav>
+    </div>
+
+    <div class="pane-body notes-pane" id="pane-notes" role="tabpanel" hidden>
+      <p class="notes-hint">What I learned — the key idea, the trick, the bug that cost you time. Saved automatically.</p>
+      <textarea name="notes" id="notes" placeholder="Key idea:&#10;Trick / pattern:&#10;Mistakes:&#10;Complexity:">{{ p.notes }}</textarea>
+    </div>
+  </section>
+
+  <div class="gutter-v" data-gutter="v" role="separator" aria-orientation="vertical" aria-label="Resize panels"></div>
+
+  {# ---------- right: editor + console ---------- #}
+  <div class="ws-right-col">
+    <section class="ws-pane ws-editor" aria-label="Code">
+      <div class="editor-bar">
+        <span class="title">{{ icon("code") }}Code</span>
+        <select name="language" id="language" aria-label="Language">
+          {% for lang in LANGUAGES %}<option value="{{ lang }}" {{ 'selected' if p.language == lang }}>{{ {"python": "Python 3", "cpp": "C++", "java": "Java", "kotlin": "Kotlin", "go": "Go", "rust": "Rust", "javascript": "JavaScript", "other": "Other"}[lang] }}</option>{% endfor %}
+        </select>
+        <span class="spacer"></span>
+        <span class="faint" style="font-size:12px">Saved to your tracker</span>
+      </div>
+      <div class="editor-host" id="editor-host">
+        <div class="monaco-host" id="monaco"></div>
+        <textarea name="solution" id="solution" class="code-input" spellcheck="false" autocapitalize="off" autocomplete="off"
+                  placeholder="Write or paste your solution here">{{ p.solution }}</textarea>
+      </div>
+      <div class="editor-status"><span id="cursor-pos">Ln 1, Col 1</span><span class="spacer"></span><span>⌘/Ctrl+S save · ⌘/Ctrl+Enter run</span></div>
+    </section>
+
+    <div class="gutter-h" data-gutter="h" role="separator" aria-orientation="horizontal" aria-label="Resize console"></div>
+
+    <section class="ws-pane ws-console" aria-label="Console">
+      <div class="pane-tabs" role="tablist" data-tabs="console">
+        <button type="button" class="pane-tab is-active" role="tab" data-tab="pane-cases">{{ icon("check-circle") }}Testcase</button>
+        <span class="sep"></span>
+        <button type="button" class="pane-tab" role="tab" data-tab="pane-result">{{ icon("terminal") }}Test Result</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-sm" data-run>{{ icon("play") }} Run</button>
+      </div>
+      <div class="console-body" id="pane-cases" role="tabpanel">
+        <div class="case-tabs" id="case-tabs"></div>
+        <div class="case-field">
+          <label for="case-input">Input</label>
+          <textarea id="case-input" rows="3" spellcheck="false" placeholder="Paste the sample input"></textarea>
+        </div>
+        <div class="case-field">
+          <label for="case-expected">Expected output <span class="faint">(optional)</span></label>
+          <textarea id="case-expected" rows="2" spellcheck="false" placeholder="Paste the sample output"></textarea>
+        </div>
+        <p class="console-note">Run executes Python 3 in your browser (nothing is sent anywhere). Test cases are kept in this browser.</p>
+      </div>
+      <div class="console-body" id="pane-result" role="tabpanel" hidden>
+        <p class="console-empty" id="result-empty">You must run your code first.</p>
+        <div id="result" hidden></div>
+      </div>
+    </section>
   </div>
-</section>
 </form>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+{% endblock %}
 
-<nav class="pager">
-  {% if prev %}<a href="/problems/{{ prev.code }}">← {{ prev.code }} {{ prev.name }}</a>{% else %}<span></span>{% endif %}
-  {% if nxt %}<a href="/problems/{{ nxt.code }}">{{ nxt.code }} {{ nxt.name }} →</a>{% endif %}
-</nav>
+{% block scripts %}
+<script src="/static/workspace.js?v={{ asset_version }}" defer></script>
 {% endblock %}

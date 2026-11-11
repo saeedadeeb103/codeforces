@@ -16,7 +16,8 @@ from sqlalchemy import text
 from app.application.practice_service import PlanFilter, ProblemWork
 from app.domain.errors import DomainError
 from app.domain.practice.problem import LANGUAGES
-from app.domain.practice.value_objects import Status
+from app.domain.practice.progress import build_progress_report
+from app.domain.practice.value_objects import DIFFICULTIES, Status
 from app.interfaces.web.auth import client_id, password_matches, safe_next
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).with_name("templates"))
@@ -55,6 +56,21 @@ def time_ago(moment: datetime | None) -> str:
 
 
 TEMPLATES.env.filters["ago"] = time_ago
+
+
+def wants_json(request: Request) -> bool:
+    return "application/json" in request.headers.get("accept", "")
+
+
+def problem_json(problem) -> JSONResponse:  # noqa: ANN001
+    return JSONResponse({
+        "ok": True,
+        "code": str(problem.code),
+        "status": problem.status.value,
+        "status_label": problem.status.label,
+        "solved_on": problem.solved_on.isoformat() if problem.solved_on else None,
+        "minutes": problem.time_spent_minutes,
+    })
 
 
 def render(request: Request, name: str, status_code: int = 200, **ctx: object) -> HTMLResponse:
@@ -135,27 +151,23 @@ def dashboard(request: Request):
 
 # --- plan & problems --------------------------------------------------------
 @router.get("/plan", response_class=HTMLResponse)
-def plan(request: Request, status: str = "", topic: str = "", day: str = ""):
+def plan(request: Request, status: str = "", topic: str = "", day: str = "", difficulty: str = "", q: str = ""):
     practice = request.app.state.practice
     everything = practice.plan()
     flt = PlanFilter(
         status=Status(status) if status in {s.value for s in Status} else None,
         topic_family=topic or None,
         day=_int(day) or None,
+        difficulty=difficulty if difficulty in DIFFICULTIES else None,
+        search=q.strip()[:80] or None,
     )
     shown = [p for p in everything if flt.matches(p)]
-    days: dict[int, list] = {}
-    for p in shown:
-        days.setdefault(p.day, []).append(p)
-    totals: dict[int, tuple[int, int]] = {}
-    for p in everything:
-        done, total = totals.get(p.day, (0, 0))
-        totals[p.day] = (done + p.is_done, total + 1)
-    families = sorted({p.topic.family for p in everything})
+    report = build_progress_report(everything)
     return render(
-        request, "plan.html", nav="plan", days=days, totals=totals, families=families,
-        flt=flt, filtered=any((flt.status, flt.topic_family, flt.day)),
-        shown=len(shown), all_days=sorted(totals),
+        request, "plan.html", nav="plan", problems=shown, report=report, flt=flt,
+        families=sorted({p.topic.family for p in everything}),
+        all_days=sorted({p.day for p in everything}),
+        filtered=any((flt.status, flt.topic_family, flt.day, flt.difficulty, flt.search)),
     )
 
 
@@ -176,6 +188,8 @@ def change_status(
     next: Annotated[str, Form()] = "",
 ):
     problem = request.app.state.practice.set_status(code, _status(status))
+    if wants_json(request):
+        return problem_json(problem)
     return RedirectResponse(safe_next(next or f"/problems/{problem.code}"), status_code=303)
 
 
@@ -196,6 +210,8 @@ def save_work(
         status=_status(status) if status else None,
     )
     problem = request.app.state.practice.save_work(code, work)
+    if wants_json(request):
+        return problem_json(problem)
     return RedirectResponse(f"/problems/{problem.code}?saved=1", status_code=303)
 
 
