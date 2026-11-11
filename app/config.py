@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -19,6 +20,7 @@ class Settings:
     production: bool
     cf_sync_minutes: int = 30  # background Codeforces sync interval; 0 turns it off
     client_ip_header: str | None = None  # header holding the real client IP, set by your proxy
+    trusted_proxies: tuple = ()  # optional: only trust client_ip_header from these networks
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -57,6 +59,15 @@ class Settings:
         if ip_header.lower() in ("", "none"):
             ip_header = ""
 
+        try:
+            proxies = tuple(
+                ipaddress.ip_network(part.strip(), strict=False)
+                for part in env.get("TRUSTED_PROXY_CIDRS", "").split(",")
+                if part.strip()
+            )
+        except ValueError as exc:
+            raise ConfigError(f"TRUSTED_PROXY_CIDRS is not a list of networks: {exc}") from exc
+
         return cls(
             app_password=env["APP_PASSWORD"],
             secret_key=env["SECRET_KEY"],
@@ -65,4 +76,5 @@ class Settings:
             production=production,
             cf_sync_minutes=sync_minutes,
             client_ip_header=ip_header or None,
+            trusted_proxies=proxies,
         )

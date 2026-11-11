@@ -96,6 +96,26 @@ def test_throttle_tracks_a_bounded_number_of_clients():
     assert len(t._failures) <= LoginThrottle.MAX_TRACKED_CLIENTS
 
 
+def test_client_id_only_accepts_a_single_valid_ip_from_trusted_peers():
+    import ipaddress
+
+    from starlette.requests import Request
+
+    from app.interfaces.web.auth import client_id
+
+    def req(peer, value):
+        headers = [(b"x-real-ip", value.encode())] if value is not None else []
+        return Request({"type": "http", "headers": headers, "client": (peer, 1234)})
+
+    assert client_id(req("100.64.0.2", "198.51.100.1"), "X-Real-IP") == "198.51.100.1"
+    for bad in ("1.2.3.4, 5.6.7.8", "not-an-ip", "", None):
+        assert client_id(req("100.64.0.2", bad), "X-Real-IP") == "100.64.0.2"
+    assert client_id(req("100.64.0.2", "198.51.100.1"), None) == "100.64.0.2"
+    proxies = (ipaddress.ip_network("100.64.0.0/10"),)
+    assert client_id(req("100.64.0.2", "198.51.100.1"), "X-Real-IP", proxies) == "198.51.100.1"
+    assert client_id(req("8.8.8.8", "198.51.100.1"), "X-Real-IP", proxies) == "8.8.8.8"
+
+
 def test_login_redirects_back_but_never_off_site(client):
     r = client.post("/login", data={"password": PASSWORD, "next": "//evil.com"}, follow_redirects=False)
     assert r.headers["location"] == "/"
@@ -234,6 +254,8 @@ def test_config_fails_closed():
     on_railway = Settings.from_env({"APP_PASSWORD": "p" * 12, "SECRET_KEY": "s" * 40,
                                     "DATABASE_URL": "postgresql://u:p@h/db", "RAILWAY_PROJECT_ID": "x"})
     assert on_railway.client_ip_header == "X-Real-IP"
+    with pytest.raises(ConfigError, match="TRUSTED_PROXY_CIDRS"):
+        Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "s", "TRUSTED_PROXY_CIDRS": "nope"})
 
 
 def test_database_url_normalisation():

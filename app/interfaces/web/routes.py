@@ -99,7 +99,8 @@ async def login(
     next: Annotated[str, Form()] = "/",
 ):
     throttle = request.app.state.throttle
-    client = client_id(request, request.app.state.settings.client_ip_header)
+    settings = request.app.state.settings
+    client = client_id(request, settings.client_ip_header, settings.trusted_proxies)
     if throttle.blocked(client):
         return render(request, "login.html", 429, next=safe_next(next),
                       error="Too many attempts. Try again in 15 minutes.")

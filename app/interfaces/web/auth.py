@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hmac
+import ipaddress
 import logging
 import time
 from urllib.parse import quote
@@ -28,18 +29,33 @@ def safe_next(target: str | None) -> str:
     return target
 
 
-def client_id(request: Request, trusted_header: str | None) -> str:
+def client_id(
+    request: Request,
+    trusted_header: str | None,
+    trusted_proxies: tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...] = (),
+) -> str:
     """Who is trying to log in.
 
     Behind Railway the socket peer is the proxy, so we read the header its edge sets and
-    overwrites on every request (X-Real-IP). Without a trusted header we use the socket peer.
-    Generic X-Forwarded-For is never trusted: clients can write whatever they like into it.
+    overwrites on every request (X-Real-IP). The header is used only when it holds exactly one
+    valid IP address and, if ``trusted_proxies`` is configured, only when the request came from
+    one of them. Otherwise we fall back to the socket peer. X-Forwarded-For is never trusted.
     """
-    if trusted_header:
-        value = request.headers.get(trusted_header, "").split(",")[0].strip()
-        if value:
-            return value[:64]
-    return request.client.host if request.client else "unknown"
+    peer = request.client.host if request.client else "unknown"
+    if not trusted_header:
+        return peer
+    if trusted_proxies:
+        try:
+            peer_ip = ipaddress.ip_address(peer)
+        except ValueError:
+            return peer
+        if not any(peer_ip in net for net in trusted_proxies):
+            return peer
+    raw = request.headers.get(trusted_header, "").strip()
+    try:
+        return str(ipaddress.ip_address(raw))  # rejects lists, garbage and empty values
+    except ValueError:
+        return peer
 
 
 def password_matches(given: str, expected: str) -> bool:

@@ -92,7 +92,7 @@ The tests cover:
 
 5. **Settings → Networking → Generate Domain** gives you the public URL.
 
-On Railway the app refuses to start without `DATABASE_URL`, because the container disk is wiped on every deploy. It also refuses to start without an `APP_PASSWORD` of at least 12 characters, and without a `SECRET_KEY` of at least 32 characters. Logins are limited to 5 failures per IP address per 15 minutes. On Railway the IP comes from the `X-Real-IP` header, which Railway's edge overwrites on every request (override with `CLIENT_IP_HEADER`). A global safety net of 200 failures per 15 minutes logs a warning when it trips. Tables are created on first boot, and the 200 problems are inserted if missing. Redeploys never overwrite your progress.
+On Railway the app refuses to start without `DATABASE_URL`, because the container disk is wiped on every deploy. It also refuses to start without an `APP_PASSWORD` of at least 12 characters, and without a `SECRET_KEY` of at least 32 characters. Logins are limited to 5 failures per IP address per 15 minutes. On Railway the IP comes from the `X-Real-IP` header, which Railway's edge overwrites on every request (override with `CLIENT_IP_HEADER`). It is used only when it holds one valid IP address, and only from the networks in `TRUSTED_PROXY_CIDRS` if you set that. A global safety net of 200 failures per 15 minutes logs a warning when it trips. Tables are created on first boot, and the 200 problems are inserted if missing. Redeploys never overwrite your progress.
 
 ## Notes
 
