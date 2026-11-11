@@ -35,6 +35,8 @@ class Settings:
 
         if production and len(env["SECRET_KEY"]) < 32:
             raise ConfigError("SECRET_KEY must be at least 32 characters in production")
+        if production and len(env["APP_PASSWORD"]) < 12:
+            raise ConfigError("APP_PASSWORD must be at least 12 characters in production")
 
         tz_name = env.get("APP_TIMEZONE", "Europe/Berlin")
         try:

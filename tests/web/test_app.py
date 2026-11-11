@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.config import ConfigError, Settings
 from app.infrastructure.db import normalize_database_url
-from app.interfaces.web.auth import is_public, safe_next
+from app.interfaces.web.auth import LoginThrottle, is_public, safe_next
 from app.interfaces.web.routes import router
 from app.main import create_app
 
@@ -62,6 +62,21 @@ def test_wrong_password_is_rejected_and_throttled(client):
     for _ in range(5):
         assert client.post("/login", data={"password": "nope"}).status_code == 401
     assert client.post("/login", data={"password": PASSWORD}).status_code == 429
+
+
+def test_spoofed_client_addresses_cannot_bypass_global_cap():
+    t = LoginThrottle(limit=5, global_limit=20)
+    for i in range(20):  # attacker rotates X-Forwarded-For on every try
+        assert not t.blocked(f"10.0.0.{i}")
+        t.fail(f"10.0.0.{i}")
+    assert t.blocked("10.0.0.99") and t.blocked("203.0.113.7")
+
+
+def test_throttle_tracks_a_bounded_number_of_clients():
+    t = LoginThrottle(limit=5, global_limit=10**9)
+    for i in range(LoginThrottle.MAX_TRACKED_CLIENTS + 500):
+        t.fail(f"c{i}")
+    assert len(t._failures) <= LoginThrottle.MAX_TRACKED_CLIENTS
 
 
 def test_login_redirects_back_but_never_off_site(client):
@@ -189,7 +204,10 @@ def test_config_fails_closed():
     with pytest.raises(ConfigError, match="DATABASE_URL"):
         Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "s" * 40, "RAILWAY_PROJECT_ID": "x"})
     with pytest.raises(ConfigError, match="SECRET_KEY"):
-        Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "short", "APP_ENV": "production",
+        Settings.from_env({"APP_PASSWORD": "p" * 12, "SECRET_KEY": "short", "APP_ENV": "production",
+                           "DATABASE_URL": "postgresql://u:p@h/db"})
+    with pytest.raises(ConfigError, match="APP_PASSWORD must be at least 12"):
+        Settings.from_env({"APP_PASSWORD": "short", "SECRET_KEY": "s" * 40, "APP_ENV": "production",
                            "DATABASE_URL": "postgresql://u:p@h/db"})
     with pytest.raises(ConfigError, match="CF_SYNC_MINUTES"):
         Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "s", "CF_SYNC_MINUTES": "1"})

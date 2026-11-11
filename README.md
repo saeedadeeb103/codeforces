@@ -85,14 +85,14 @@ The tests cover:
    | Variable | Value |
    | --- | --- |
    | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (reference to the Postgres service) |
-   | `APP_PASSWORD` | your login password |
+   | `APP_PASSWORD` | your login password (at least 12 characters; a long random one is best) |
    | `SECRET_KEY` | output of `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` |
    | `APP_TIMEZONE` | `Europe/Berlin` (or your zone; decides what "today" means) |
    | `CF_SYNC_MINUTES` | optional, default `30`; `0` turns the background sync off |
 
 5. **Settings → Networking → Generate Domain** gives you the public URL.
 
-On Railway the app refuses to start without `DATABASE_URL`, because the container disk is wiped on every deploy. It also refuses to start without `APP_PASSWORD`, and without a `SECRET_KEY` of at least 32 characters. Tables are created on first boot, and the 200 problems are inserted if missing. Redeploys never overwrite your progress.
+On Railway the app refuses to start without `DATABASE_URL`, because the container disk is wiped on every deploy. It also refuses to start without an `APP_PASSWORD` of at least 12 characters, and without a `SECRET_KEY` of at least 32 characters. Logins are limited to 5 failures per IP address and 20 failures overall per 15 minutes. If someone trips the overall limit, the login page locks for 15 minutes, but browsers already logged in stay logged in. Tables are created on first boot, and the 200 problems are inserted if missing. Redeploys never overwrite your progress.
 
 ## Notes
 

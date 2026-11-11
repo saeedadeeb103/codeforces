@@ -49,21 +49,47 @@ class RequireLogin:
 
 
 class LoginThrottle:
-    """At most ``limit`` failed attempts per client per ``window`` seconds (in-memory, one process)."""
+    """Failed-login limits per ``window`` seconds (in-memory, one process).
 
-    def __init__(self, limit: int = 5, window: float = 15 * 60) -> None:
+    - ``limit`` failures per client address.
+    - ``global_limit`` failures across *all* clients. Client addresses come from proxy headers
+      and can be spoofed, so this cap is what actually bounds brute force. The trade-off: an
+      attacker can lock the login page for one window, but existing sessions keep working.
+    """
+
+    MAX_TRACKED_CLIENTS = 1_000
+
+    def __init__(self, limit: int = 5, global_limit: int = 20, window: float = 15 * 60) -> None:
         self.limit = limit
+        self.global_limit = global_limit
         self.window = window
         self._failures: dict[str, list[float]] = {}
+        self._all_failures: list[float] = []
+
+    def _prune(self, now: float) -> None:
+        self._all_failures = [t for t in self._all_failures if now - t < self.window]
+        for client in list(self._failures):
+            recent = [t for t in self._failures[client] if now - t < self.window]
+            if recent:
+                self._failures[client] = recent
+            else:
+                del self._failures[client]
 
     def blocked(self, client: str) -> bool:
-        now = time.monotonic()
-        recent = [t for t in self._failures.get(client, []) if now - t < self.window]
-        self._failures[client] = recent
-        return len(recent) >= self.limit
+        self._prune(time.monotonic())
+        return (
+            len(self._all_failures) >= self.global_limit
+            or len(self._failures.get(client, [])) >= self.limit
+        )
 
     def fail(self, client: str) -> None:
-        self._failures.setdefault(client, []).append(time.monotonic())
+        now = time.monotonic()
+        self._all_failures.append(now)
+        if client not in self._failures and len(self._failures) >= self.MAX_TRACKED_CLIENTS:
+            self._prune(now)
+            if len(self._failures) >= self.MAX_TRACKED_CLIENTS:
+                return  # the global cap still counts this failure
+        self._failures.setdefault(client, []).append(now)
 
     def reset(self, client: str) -> None:
         self._failures.pop(client, None)
