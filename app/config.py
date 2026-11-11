@@ -18,6 +18,7 @@ class Settings:
     timezone: ZoneInfo
     production: bool
     cf_sync_minutes: int = 30  # background Codeforces sync interval; 0 turns it off
+    client_ip_header: str | None = None  # header holding the real client IP, set by your proxy
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -51,6 +52,11 @@ class Settings:
         if sync_minutes < 0 or 0 < sync_minutes < 5:
             raise ConfigError("CF_SYNC_MINUTES must be 0 (off) or at least 5")
 
+        on_railway = any(k.startswith("RAILWAY_") for k in env)
+        ip_header = env.get("CLIENT_IP_HEADER", "X-Real-IP" if on_railway else "").strip()
+        if ip_header.lower() in ("", "none"):
+            ip_header = ""
+
         return cls(
             app_password=env["APP_PASSWORD"],
             secret_key=env["SECRET_KEY"],
@@ -58,4 +64,5 @@ class Settings:
             timezone=tz,
             production=production,
             cf_sync_minutes=sync_minutes,
+            client_ip_header=ip_header or None,
         )

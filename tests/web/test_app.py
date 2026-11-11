@@ -64,12 +64,29 @@ def test_wrong_password_is_rejected_and_throttled(client):
     assert client.post("/login", data={"password": PASSWORD}).status_code == 429
 
 
-def test_spoofed_client_addresses_cannot_bypass_global_cap():
-    t = LoginThrottle(limit=5, global_limit=20)
-    for i in range(20):  # attacker rotates X-Forwarded-For on every try
-        assert not t.blocked(f"10.0.0.{i}")
-        t.fail(f"10.0.0.{i}")
-    assert t.blocked("10.0.0.99") and t.blocked("203.0.113.7")
+def test_global_safety_net_still_bounds_many_clients():
+    t = LoginThrottle(limit=5, global_limit=200)
+    for i in range(199):
+        t.fail(f"10.0.{i // 250}.{i % 250}")
+    assert not t.blocked("203.0.113.7")  # far below the net: a fresh client is not locked out
+    t.fail("10.9.9.9")
+    assert t.blocked("203.0.113.7")
+
+
+def test_throttle_keys_on_trusted_header_and_ignores_x_forwarded_for(tmp_path):
+    from dataclasses import replace
+
+    app = create_app(replace(_settings(tmp_path), client_ip_header="X-Real-IP"), clock=lambda: TODAY)
+    c = TestClient(app)
+    attacker = {"X-Real-IP": "198.51.100.1"}
+    for i in range(5):  # rotating X-Forwarded-For changes nothing
+        r = c.post("/login", data={"password": "nope"}, headers={**attacker, "X-Forwarded-For": f"1.2.3.{i}"})
+        assert r.status_code == 401
+    assert c.post("/login", data={"password": PASSWORD}, headers=attacker).status_code == 429
+    # you, from your own address, can still log in
+    r = c.post("/login", data={"password": PASSWORD}, headers={"X-Real-IP": "203.0.113.7"},
+               follow_redirects=False)
+    assert r.status_code == 303
 
 
 def test_throttle_tracks_a_bounded_number_of_clients():
@@ -213,7 +230,10 @@ def test_config_fails_closed():
         Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "s", "CF_SYNC_MINUTES": "1"})
     s = Settings.from_env({"APP_PASSWORD": "p", "SECRET_KEY": "s"})
     assert s.database_url.startswith("sqlite") and str(s.timezone) == "Europe/Berlin"
-    assert s.cf_sync_minutes == 30
+    assert s.cf_sync_minutes == 30 and s.client_ip_header is None
+    on_railway = Settings.from_env({"APP_PASSWORD": "p" * 12, "SECRET_KEY": "s" * 40,
+                                    "DATABASE_URL": "postgresql://u:p@h/db", "RAILWAY_PROJECT_ID": "x"})
+    assert on_railway.client_ip_header == "X-Real-IP"
 
 
 def test_database_url_normalisation():

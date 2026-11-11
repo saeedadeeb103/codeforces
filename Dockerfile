@@ -15,5 +15,6 @@ USER appuser
 
 ENV PORT=8000
 EXPOSE 8000
-# Railway injects $PORT; proxy headers so redirects keep https.
-CMD ["sh", "-c", "exec uvicorn --factory app.main:create_app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'"]
+# Railway injects $PORT. Forwarded headers are NOT trusted wholesale (they can be spoofed);
+# redirects are relative, and the login throttle reads the client IP from X-Real-IP (see config).
+CMD ["sh", "-c", "exec uvicorn --factory app.main:create_app --host 0.0.0.0 --port ${PORT} --no-proxy-headers"]

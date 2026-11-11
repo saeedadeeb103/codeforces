@@ -17,7 +17,7 @@ from app.application.practice_service import PlanFilter, ProblemWork
 from app.domain.errors import DomainError
 from app.domain.practice.problem import LANGUAGES
 from app.domain.practice.value_objects import Status
-from app.interfaces.web.auth import password_matches, safe_next
+from app.interfaces.web.auth import client_id, password_matches, safe_next
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).with_name("templates"))
 router = APIRouter()
@@ -99,7 +99,7 @@ async def login(
     next: Annotated[str, Form()] = "/",
 ):
     throttle = request.app.state.throttle
-    client = request.client.host if request.client else "unknown"
+    client = client_id(request, request.app.state.settings.client_ip_header)
     if throttle.blocked(client):
         return render(request, "login.html", 429, next=safe_next(next),
                       error="Too many attempts. Try again in 15 minutes.")

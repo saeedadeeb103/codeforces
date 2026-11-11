@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import hmac
+import logging
 import time
 from urllib.parse import quote
 
+from starlette.requests import Request
 from starlette.responses import RedirectResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
+
+log = logging.getLogger(__name__)
 
 PUBLIC_PATHS = {"/login", "/healthz"}
 PUBLIC_PREFIXES = ("/static/",)
@@ -22,6 +26,20 @@ def safe_next(target: str | None) -> str:
     if not target or not target.startswith("/") or target.startswith(("//", "/\\")):
         return "/"
     return target
+
+
+def client_id(request: Request, trusted_header: str | None) -> str:
+    """Who is trying to log in.
+
+    Behind Railway the socket peer is the proxy, so we read the header its edge sets and
+    overwrites on every request (X-Real-IP). Without a trusted header we use the socket peer.
+    Generic X-Forwarded-For is never trusted: clients can write whatever they like into it.
+    """
+    if trusted_header:
+        value = request.headers.get(trusted_header, "").split(",")[0].strip()
+        if value:
+            return value[:64]
+    return request.client.host if request.client else "unknown"
 
 
 def password_matches(given: str, expected: str) -> bool:
@@ -51,20 +69,21 @@ class RequireLogin:
 class LoginThrottle:
     """Failed-login limits per ``window`` seconds (in-memory, one process).
 
-    - ``limit`` failures per client address.
-    - ``global_limit`` failures across *all* clients. Client addresses come from proxy headers
-      and can be spoofed, so this cap is what actually bounds brute force. The trade-off: an
-      attacker can lock the login page for one window, but existing sessions keep working.
+    - ``limit`` failures per client: the real brute-force guard, keyed by a trusted client IP.
+    - ``global_limit`` failures across all clients: a high safety net in case the client IP
+      is ever wrong. It is far above anything you'd hit yourself, and with a 12+ character
+      password 200 guesses per 15 minutes gets nowhere. When it trips we log a warning.
     """
 
     MAX_TRACKED_CLIENTS = 1_000
 
-    def __init__(self, limit: int = 5, global_limit: int = 20, window: float = 15 * 60) -> None:
+    def __init__(self, limit: int = 5, global_limit: int = 200, window: float = 15 * 60) -> None:
         self.limit = limit
         self.global_limit = global_limit
         self.window = window
         self._failures: dict[str, list[float]] = {}
         self._all_failures: list[float] = []
+        self._warned = False
 
     def _prune(self, now: float) -> None:
         self._all_failures = [t for t in self._all_failures if now - t < self.window]
@@ -77,10 +96,14 @@ class LoginThrottle:
 
     def blocked(self, client: str) -> bool:
         self._prune(time.monotonic())
-        return (
-            len(self._all_failures) >= self.global_limit
-            or len(self._failures.get(client, [])) >= self.limit
-        )
+        if len(self._all_failures) >= self.global_limit:
+            if not self._warned:
+                log.warning("Login safety limit reached: %d failed logins in %ds from many clients",
+                            len(self._all_failures), int(self.window))
+                self._warned = True
+            return True
+        self._warned = False
+        return len(self._failures.get(client, [])) >= self.limit
 
     def fail(self, client: str) -> None:
         now = time.monotonic()
@@ -88,7 +111,7 @@ class LoginThrottle:
         if client not in self._failures and len(self._failures) >= self.MAX_TRACKED_CLIENTS:
             self._prune(now)
             if len(self._failures) >= self.MAX_TRACKED_CLIENTS:
-                return  # the global cap still counts this failure
+                return  # still counted by the global safety net
         self._failures.setdefault(client, []).append(now)
 
     def reset(self, client: str) -> None:
